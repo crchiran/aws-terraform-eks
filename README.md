@@ -1,11 +1,50 @@
-# AWS EKS Development Environment with Terraform
+# 🚀 AWS EKS Development Environment with Terraform
 
-This repository contains Terraform configurations for provisioning an AWS EKS development environment.
+This repository contains Terraform configurations for provisioning a complete Amazon EKS development environment on AWS.
 
-## Repository Structure
+The infrastructure includes:
+
+* Amazon EKS Cluster
+* Managed Node Groups
+* IAM Roles and Policies
+* EKS OIDC Provider
+* AWS EBS CSI Driver
+* Kubernetes Storage Integration
+* Networking Components
+* Terraform Outputs
+
+This repository is designed for learning, development, testing, and proof-of-concept environments.
+
+---
+
+# 📖 Architecture Overview
+
+```text
+Developer
+    │
+    ▼
+Terraform
+    │
+    ▼
+AWS Account
+    │
+    ▼
+Amazon EKS Cluster
+    ├── Managed Node Group
+    ├── IAM Roles
+    ├── OIDC Provider
+    ├── EBS CSI Driver
+    └── Kubernetes Workloads
+```
+
+---
+
+# 📁 Repository Structure
 
 ```text
 .
+├── README.md
+├── ebs-csi.tf
 ├── eks.tf
 ├── iam.tf
 ├── main.tf
@@ -13,33 +52,80 @@ This repository contains Terraform configurations for provisioning an AWS EKS de
 └── var.tf
 ```
 
-### Files Description
+---
 
-| File         | Description                                              |
-| ------------ | -------------------------------------------------------- |
-| `main.tf`    | Core infrastructure resources and provider configuration |
-| `eks.tf`     | Amazon EKS cluster and node group configuration          |
-| `iam.tf`     | IAM roles and policies required by EKS                   |
-| `var.tf`     | Terraform input variables                                |
-| `outputs.tf` | Terraform outputs                                        |
+# 📄 File Description
+
+| File         | Description                                                    |
+| ------------ | -------------------------------------------------------------- |
+| `main.tf`    | AWS provider and common Terraform configuration                |
+| `eks.tf`     | Amazon EKS cluster and managed node group configuration        |
+| `iam.tf`     | IAM roles, policies, trust relationships, and OIDC integration |
+| `ebs-csi.tf` | AWS EBS CSI Driver installation and IAM permissions            |
+| `var.tf`     | Input variables                                                |
+| `outputs.tf` | Terraform outputs and cluster connection information           |
+| `README.md`  | Project documentation                                          |
 
 ---
 
-## Environment
+# 🎯 Environment Purpose
 
 This repository is intended for:
 
 ```text
-Development Environment
+Development
+Testing
+Learning
+Proof of Concept
+Lab Environment
 ```
 
-Configuration values, sizing, and settings are optimized for development and learning purposes.
+It is not intended for production workloads.
 
 ---
 
-## Prerequisites
+# 💻 Minimum Requirements
 
-### Install Terraform
+## Local Workstation
+
+| Component        | Minimum               |
+| ---------------- | --------------------- |
+| CPU              | 2 vCPU                |
+| Memory           | 4 GB                  |
+| Storage          | 10 GB Free Space      |
+| Operating System | Linux, macOS, Windows |
+| Internet         | Required              |
+
+---
+
+# ☁️ AWS Requirements
+
+Required AWS permissions:
+
+```text
+Amazon EKS
+IAM
+EC2
+VPC
+Auto Scaling
+CloudWatch
+EBS
+STS
+```
+
+Recommended AWS account:
+
+```text
+AWS Sandbox
+Development Account
+Learning Account
+```
+
+---
+
+# 🔧 Prerequisites
+
+## Terraform
 
 Required version:
 
@@ -47,13 +133,15 @@ Required version:
 Terraform >= 1.6
 ```
 
-Verify installation:
+Verify:
 
 ```bash
 terraform version
 ```
 
-### Install AWS CLI
+---
+
+## AWS CLI
 
 Verify installation:
 
@@ -61,51 +149,135 @@ Verify installation:
 aws --version
 ```
 
-### Configure AWS Credentials
+---
+
+## kubectl
+
+Verify installation:
+
+```bash
+kubectl version --client
+```
+
+---
+
+## Configure AWS Credentials
 
 ```bash
 aws configure
 ```
 
-Verify access:
+Verify:
 
 ```bash
 aws sts get-caller-identity
 ```
 
+Expected output:
+
+```json
+{
+  "Account": "123456789012",
+  "Arn": "arn:aws:iam::123456789012:user/admin"
+}
+```
+
 ---
 
-## Deployment
+# ⚙️ Deployment Workflow
 
-### Initialize Terraform
+## 1. Initialize Terraform
 
 ```bash
 terraform init
 ```
 
-### Review Changes
+---
+
+## 2. Validate Configuration
+
+```bash
+terraform validate
+```
+
+---
+
+## 3. Review Infrastructure Changes
 
 ```bash
 terraform plan
 ```
 
-### Create Infrastructure
+---
+
+## 4. Deploy Infrastructure
 
 ```bash
 terraform apply
 ```
 
-### Destroy Infrastructure
+Type:
+
+```text
+yes
+```
+
+when prompted.
+
+---
+
+## 5. Configure kubectl
+
+After deployment:
 
 ```bash
-terraform destroy
+aws eks update-kubeconfig \
+  --region ap-southeast-1 \
+  --name <cluster-name>
+```
+
+Verify:
+
+```bash
+kubectl get nodes
+```
+
+Example:
+
+```text
+NAME                           STATUS   ROLES    AGE
+ip-10-0-1-10                   Ready    <none>   5m
+ip-10-0-2-20                   Ready    <none>   5m
 ```
 
 ---
 
-## Remote Backend (Recommended)
+# 💾 AWS EBS CSI Driver
 
-For remote state management, configure an S3 backend and DynamoDB locking.
+This repository installs and configures:
+
+```text
+AWS EBS CSI Driver
+```
+
+Benefits:
+
+* Dynamic Persistent Volume provisioning
+* Persistent storage for Kubernetes workloads
+* Support for StatefulSets
+* Integration with AWS EBS
+
+Verify:
+
+```bash
+kubectl get pods -n kube-system | grep ebs
+```
+
+---
+
+# 🔐 Remote Backend (Recommended)
+
+Use remote state storage.
 
 Example:
 
@@ -113,7 +285,7 @@ Example:
 terraform {
   backend "s3" {
     bucket         = "hudai-terraform-state"
-    key            = "dev/eks/cluster.tfstate"
+    key            = "dev/eks/terraform.tfstate"
     region         = "ap-southeast-1"
     encrypt        = true
     dynamodb_table = "terraform-locks"
@@ -121,77 +293,148 @@ terraform {
 }
 ```
 
+Benefits:
+
+* Centralized state management
+* State locking
+* Team collaboration
+* Backup and recovery
+
 ---
 
-## Production Environment
+# 📤 Terraform Outputs
 
-This repository is intended for development and learning purposes only and should not be used as-is for production workloads.
-
-For production deployments, use the dedicated production repository:
-
-```text
-https://github.com/crchiran/aws-terraform-eks-prod.git
-```
-
-Clone the production repository:
+View outputs:
 
 ```bash
-git clone https://github.com/crchiran/aws-terraform-eks-prod.git
+terraform output
 ```
 
-The production repository includes additional enterprise-grade architecture, security hardening, operational controls, and best practices required for running Amazon EKS in production environments.
+Show specific output:
 
-Key production features include:
-
-* Private worker nodes with no public IP addresses
-* Restricted or private Kubernetes API endpoint
-* Dedicated VPC design with public, private, and isolated subnets
-* NAT Gateway or VPC endpoints for controlled outbound access
-* Least-privilege IAM roles and policies
-* IAM Roles for Service Accounts (IRSA)
-* Kubernetes RBAC with minimal permissions
-* Default-deny NetworkPolicies for ingress and egress
-* Pod Security Standards for workload hardening
-* Secure secret management using AWS Secrets Manager, AWS Systems Manager Parameter Store, or External Secrets Operator
-* Encryption at rest and in transit
-* Centralized logging, monitoring, and alerting
-* EKS control plane logging and AWS CloudTrail integration
-* Container image scanning and vulnerability management
-* Admission policies using Kyverno or OPA Gatekeeper
-* Backup and disaster recovery planning
-* GitOps-based change management workflows
-* Separate development, staging, and production environments
-* Production-ready operational and security best practices
+```bash
+terraform output cluster_name
+```
 
 ---
 
-## Useful Commands
+# 🔍 Verification
 
-### Format Terraform
+## Verify Cluster
+
+```bash
+kubectl cluster-info
+```
+
+---
+
+## Verify Nodes
+
+```bash
+kubectl get nodes
+```
+
+---
+
+## Verify System Pods
+
+```bash
+kubectl get pods -A
+```
+
+---
+
+## Verify Storage Classes
+
+```bash
+kubectl get storageclass
+```
+
+---
+
+## Verify EBS CSI Driver
+
+```bash
+kubectl get pods -n kube-system | grep ebs
+```
+
+---
+
+# 🧹 Destroy Infrastructure
+
+Destroy resources:
+
+```bash
+terraform destroy
+```
+
+Review carefully before confirming.
+
+---
+
+# 🚨 Production Notice
+
+This repository is intended for:
+
+```text
+Development
+Testing
+Learning
+Proof of Concept
+```
+
+Do not use this repository as-is for production environments.
+
+For production workloads, use a dedicated production repository with:
+
+* Private Worker Nodes
+* Restricted Kubernetes API Access
+* Multi-AZ Architecture
+* IRSA
+* RBAC Hardening
+* Network Policies
+* Secrets Management
+* Monitoring and Alerting
+* Backup and Disaster Recovery
+* GitOps Deployment
+* Security Scanning
+* Compliance Controls
+
+---
+
+# Useful Terraform Commands
+
+## Format Code
 
 ```bash
 terraform fmt -recursive
 ```
 
-### Validate Configuration
+## Validate
 
 ```bash
 terraform validate
 ```
 
-### Show Current State
+## Show State
 
 ```bash
 terraform show
 ```
 
-### List Managed Resources
+## List Resources
 
 ```bash
 terraform state list
 ```
 
-### View Outputs
+## Refresh State
+
+```bash
+terraform refresh
+```
+
+## View Outputs
 
 ```bash
 terraform output
@@ -199,18 +442,35 @@ terraform output
 
 ---
 
-## Notes
+# Security Best Practices
 
-* This repository is designed for development and learning purposes only.
-* Review all Terraform plans before applying infrastructure changes.
-* Store Terraform state remotely using Amazon S3 and DynamoDB.
-* Do not commit secrets, credentials, access keys, or sensitive `.tfvars` files to Git.
-* Use separate state files and environments for development and production workloads.
-* Follow AWS security best practices and the principle of least privilege.
-* Test infrastructure changes in development before deploying to production environments.
+✅ Use remote Terraform state
+
+✅ Enable state locking
+
+✅ Use least-privilege IAM policies
+
+✅ Enable EBS encryption
+
+✅ Use IAM Roles for Service Accounts (IRSA)
+
+✅ Rotate credentials regularly
+
+✅ Review Terraform plans before applying
+
+✅ Protect Terraform state files
+
+❌ Do not commit:
+
+```text
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+.env
+AWS Access Keys
+Private Keys
+Secrets
+```
 
 ---
 
-## License
-
-This project is provided for educational and development purposes.
